@@ -1,25 +1,44 @@
 {
   "name": "Web Launcher",
   "short_name": "Launcher",
-  "description": "A native-like web launcher app",
+  "description": "Immersive native-like web launcher",
   "start_url": "/index.html",
-  "display": "standalone",
-  "orientation": "any",
-  "background_color": "#0f0f1a",
-  "theme_color": "#4F46E5",
+  "id": "/",
+  "display_override": ["window-controls-overlay", "fullscreen", "standalone"],
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "scope": "/",
+  "prefer_related_applications": false,
+  "categories": ["utilities"],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

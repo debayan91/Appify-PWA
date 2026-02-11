@@ -1,13 +1,13 @@
-const CACHE_NAME = "launcher-v1";
-const PRECACHE = ["/", "/index.html", "/style.css"];
+const CACHE_NAME = "launcher-v2";
+const PRECACHE = ["/", "/index.html", "/style.css", "/icons/icon-192.png"];
 
-/* Install — cache the shell */
+/* Install — cache the shell for instant startup */
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(PRECACHE)));
   self.skipWaiting();
 });
 
-/* Activate — purge old caches */
+/* Activate — purge old caches, claim clients immediately */
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches
@@ -21,11 +21,11 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-/* Fetch — cache-first for shell, network-first for everything else */
+/* Fetch — cache-first for same-origin, pass-through for external */
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 
-  /* Only handle same-origin requests */
+  /* Never intercept cross-origin (the target site) */
   if (url.origin !== location.origin) return;
 
   e.respondWith(

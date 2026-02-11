@@ -2,19 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- Immersive viewport: no zoom, cover notches -->
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#4F46E5" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="description" content="Web Launcher — native-like PWA wrapper" />
 
+    <!-- Theme: pure black everywhere -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="msapplication-navbutton-color" content="#000000" />
+    <meta name="msapplication-TileColor" content="#000000" />
+
+    <!-- iOS: standalone + black status bar -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Launcher" />
+
+    <!-- Android: standalone -->
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Disable format detection -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <meta name="description" content="Immersive web launcher" />
     <title>Web Launcher</title>
 
     <link rel="manifest" href="manifest.json" />
@@ -30,16 +41,121 @@
     </div>
 
     <script>
-      /* ── Config ──────────────────────────────── */
+      /* ═══════════════════════════════════════════
+         CONFIG
+         ═══════════════════════════════════════════ */
       const TARGET_URL = "https://youtube.com";
-      const SPLASH_MS = 1200; // minimum splash duration
+      const SPLASH_MS = 1200;
 
-      /* ── Service Worker ─────────────────────── */
+      /* ═══════════════════════════════════════════
+         1. SERVICE WORKER
+         ═══════════════════════════════════════════ */
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
       }
 
-      /* ── Redirect after splash ──────────────── */
+      /* ═══════════════════════════════════════════
+         2. FULLSCREEN API — request on first touch
+            or visibility change (covers app resume)
+         ═══════════════════════════════════════════ */
+      function tryFullscreen() {
+        const el = document.documentElement;
+        const rfs =
+          el.requestFullscreen ||
+          el.webkitRequestFullscreen ||
+          el.msRequestFullscreen;
+        if (rfs && !document.fullscreenElement) {
+          rfs.call(el).catch(() => {});
+        }
+      }
+
+      /* Trigger on first user gesture (required by browsers) */
+      document.addEventListener("click", tryFullscreen, { once: true });
+      document.addEventListener("touchstart", tryFullscreen, { once: true });
+
+      /* Re-request on app resume / tab focus */
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") tryFullscreen();
+      });
+      window.addEventListener("focus", tryFullscreen);
+
+      /* ═══════════════════════════════════════════
+         3. ORIENTATION LOCK — portrait if supported
+         ═══════════════════════════════════════════ */
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("portrait").catch(() => {});
+      }
+
+      /* ═══════════════════════════════════════════
+         4. PREVENT ZOOM (gesture + keyboard)
+         ═══════════════════════════════════════════ */
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (e.touches.length > 1) e.preventDefault();
+        },
+        { passive: false }
+      );
+
+      document.addEventListener("gesturestart", (e) => e.preventDefault());
+      document.addEventListener("gesturechange", (e) => e.preventDefault());
+      document.addEventListener("gestureend", (e) => e.preventDefault());
+
+      /* Ctrl/Cmd +/- zoom prevention */
+      document.addEventListener("keydown", (e) => {
+        if (
+          (e.ctrlKey || e.metaKey) &&
+          (e.key === "+" || e.key === "-" || e.key === "=")
+        ) {
+          e.preventDefault();
+        }
+      });
+
+      /* ═══════════════════════════════════════════
+         5. DISABLE CONTEXT MENU & TEXT SELECTION
+         ═══════════════════════════════════════════ */
+      document.addEventListener("contextmenu", (e) => e.preventDefault());
+      document.addEventListener("selectstart", (e) => e.preventDefault());
+      document.addEventListener("dragstart", (e) => e.preventDefault());
+
+      /* ═══════════════════════════════════════════
+         6. BACK-BUTTON GUARD
+            Keeps the user inside; re-launches if
+            they somehow land back on this shell.
+         ═══════════════════════════════════════════ */
+      history.pushState(null, "", location.href);
+      history.pushState(null, "", location.href);
+      window.addEventListener("popstate", () => {
+        history.pushState(null, "", location.href);
+        if (!window.location.href.startsWith(TARGET_URL)) {
+          window.location.replace(TARGET_URL);
+        }
+      });
+
+      /* ═══════════════════════════════════════════
+         7. PULL-TO-REFRESH BLOCKER (Chrome Android)
+         ═══════════════════════════════════════════ */
+      let startY = 0;
+      document.addEventListener(
+        "touchstart",
+        (e) => {
+          startY = e.touches[0].pageY;
+        },
+        { passive: true }
+      );
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          if (window.scrollY === 0 && e.touches[0].pageY > startY) {
+            e.preventDefault();
+          }
+        },
+        { passive: false }
+      );
+
+      /* ═══════════════════════════════════════════
+         8. SPLASH → LAUNCH
+         ═══════════════════════════════════════════ */
       function launch() {
         const splash = document.getElementById("splash");
         splash.classList.add("hide");
@@ -48,25 +164,12 @@
         }, 400);
       }
 
-      /* Wait at least SPLASH_MS so the user sees the icon */
       setTimeout(launch, SPLASH_MS);
 
-      /* ── Back-button guard ──────────────────── */
-      history.pushState(null, "", location.href);
-      window.addEventListener("popstate", () => {
-        history.pushState(null, "", location.href);
-        /* If user somehow got back here, re-launch */
-        if (
-          window.location.origin === location.origin &&
-          !window.location.href.startsWith(TARGET_URL)
-        ) {
-          window.location.replace(TARGET_URL);
-        }
-      });
-
-      /* ── Handle unload — if user navigates away, go back ── */
+      /* ═══════════════════════════════════════════
+         9. BEFOREUNLOAD GUARD
+         ═══════════════════════════════════════════ */
       window.addEventListener("beforeunload", () => {
-        /* Push state so returning to the PWA re-triggers launch */
         history.pushState(null, "", location.href);
       });
     </script>
