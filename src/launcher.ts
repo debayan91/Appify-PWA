@@ -8,8 +8,8 @@
  * 3. Perform a hard navigation to the target URL.
  */
 
-const TARGET_URL = "https://adidas.com";
-const LAUNCH_DELAY_MS = 1000;
+const TARGET_URL = "https://youtube.com";
+const LAUNCH_DELAY_MS = 2000;
 
 export const initLauncher = () => {
   console.log(

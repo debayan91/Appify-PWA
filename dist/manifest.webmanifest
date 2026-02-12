@@ -1,7 +1,7 @@
 {
-  "name": "VisionAI - Accessibility Navigator",
-  "short_name": "VisionAI",
-  "description": "OLED Blind Accessibility Navigation App - AI-powered visual assistance",
+  "name": "YouTube",
+  "short_name": "YouTube",
+  "description": "YouTube Launcher",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -20,6 +20,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "categories": ["accessibility", "navigation", "utilities"]
+  ]
 }
