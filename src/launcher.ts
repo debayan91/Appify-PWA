@@ -8,7 +8,7 @@
  * 3. Perform a hard navigation to the target URL.
  */
 
-const TARGET_URL = "https://example.com";
+const TARGET_URL = "https://adidas.com";
 const LAUNCH_DELAY_MS = 1000;
 
 export const initLauncher = () => {
